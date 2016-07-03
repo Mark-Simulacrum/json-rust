@@ -696,7 +696,8 @@ pub fn write<W: Write>(writer: &mut W, mut v: f64) {
 
     // If grisu3 was not able to convert the number to a string, then use old sprintf (suboptimal).
     if success == 0 {
-        panic!("GRISU CANNOT DO!")
+        write!(writer, "{}", v);
+        return;
     }
 
     let decimals = min!(-d_exp, max!(1, (len as i32)-1));
