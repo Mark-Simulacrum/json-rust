@@ -1,9 +1,12 @@
+use std::mem;
+use std::slice;
 use std::io::Write;
 use std::num::FpCategory;
 use JsonValue;
 
 extern crate itoa;
-extern crate dtoa;
+// extern crate dtoa;
+use grisu;
 
 const QU: u8 = b'"';
 const BS: u8 = b'\\';
@@ -93,7 +96,10 @@ pub trait Generator {
                 if num.fract() == 0.0 && num.abs() < 1e19 {
                     itoa::write(self.get_writer(), num as i64).unwrap();
                 } else {
-                    dtoa::write(self.get_writer(), num).unwrap();
+                    // dtoa::write(self.get_writer(), num).unwrap()
+                    grisu::write(self.get_writer(), num);
+
+                    // self.write(&buf[0..len]);
                     // let abs = num.abs();
                     // if abs < 1e-15 || abs > 1e19 {
                     //     write!(self.get_writer(), "{:e}", num).unwrap();
@@ -177,7 +183,7 @@ impl DumpGenerator {
     }
 
     pub fn consume(self) -> String {
-        String::from_utf8(self.code).unwrap()
+        unsafe { String::from_utf8_unchecked(self.code) }//.unwrap()
     }
 }
 
