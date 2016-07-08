@@ -1,6 +1,7 @@
 use std::{ str, char, f64 };
 use std::collections::BTreeMap;
 use { JsonValue, JsonError, JsonResult };
+use dec64::Dec64;
 
 const MAX_PRECISION: u64 = 576460752303423500;
 
@@ -189,7 +190,7 @@ macro_rules! expect_number {
     ($parser:ident, $first:ident) => ({
         let mut num = ($first - b'0') as u64;
 
-        let result: f64;
+        let result: Dec64;
 
         // Cap on how many iterations we do while reading to u64
         // in order to avoid an overflow.
@@ -200,7 +201,7 @@ macro_rules! expect_number {
             }
 
             if $parser.is_eof() {
-                result = num as f64;
+                result = Dec64::from(num);
                 break;
             }
 
@@ -217,7 +218,7 @@ macro_rules! expect_number {
                     break;
                 },
                 _  => {
-                    result = num as f64;
+                    result = Dec64::from(num);
                     break;
                 }
             }
@@ -255,7 +256,8 @@ macro_rules! expect_value {
                     b'1' ... b'9' => expect_number!($parser, ch),
                     _    => return $parser.unexpected_character(ch)
                 };
-                JsonValue::Number(-num)
+                JsonValue::Number(num)
+                // JsonValue::Number(-num)
             }
             b't' => {
                 sequence!($parser, b'r', b'u', b'e');
@@ -462,14 +464,14 @@ impl<'a> Parser<'a> {
         Ok(unsafe { String::from_utf8_unchecked(buffer) })
     }
 
-    fn read_big_number(&mut self, num: u64) -> JsonResult<f64> {
+    fn read_big_number(&mut self, num: u64) -> JsonResult<Dec64> {
         // Attempt to continue reading digits that would overflow
         // u64 into freshly converted f64
 
         let mut e = 0i32;
         loop {
             if self.is_eof() {
-                return Ok(make_float(num, e));
+                return Ok(Dec64::from_parts(num as i64, e as i8));
             }
             match self.read_byte() {
                 b'0' ... b'9' => {
@@ -483,9 +485,9 @@ impl<'a> Parser<'a> {
         self.read_number_with_fraction(num, e)
     }
 
-    fn read_number_with_fraction(&mut self, mut num: u64, mut e: i32) -> JsonResult<f64> {
+    fn read_number_with_fraction(&mut self, mut num: u64, mut e: i32) -> JsonResult<Dec64> {
         if self.is_eof() {
-            return Ok(make_float(num, e));
+            return Ok(Dec64::from_parts(num as i64, e as i8));
         }
 
         let mut ch = self.read_byte();
@@ -495,7 +497,7 @@ impl<'a> Parser<'a> {
 
             loop {
                 if self.is_eof() {
-                    return Ok(make_float(num, e));
+                    return Ok(Dec64::from_parts(num as i64, e as i8));
                 }
                 ch = self.read_byte();
 
@@ -536,10 +538,10 @@ impl<'a> Parser<'a> {
 
             read_num!(self, digit, e = (e << 3) + (e << 1) + digit as i32);
 
-            return Ok(num * exponent_to_power(e * sign));
+            return Ok(Dec64::from_parts(num as i64, e as i8));
         }
 
-        Ok(make_float(num, e))
+        Ok(Dec64::from_parts(num as i64, e as i8))
     }
 
     fn read_object(&mut self) -> JsonResult<BTreeMap<String, JsonValue>> {

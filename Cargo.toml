@@ -8,4 +8,4 @@ documentation = "http://terhix.com/doc/json/"
 license = "MIT"
 
 [dependencies]
-itoa = "0.1"
+dec64 = "0.1"

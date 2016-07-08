@@ -197,6 +197,8 @@
 //! # }
 //! ```
 
+extern crate dec64;
+
 mod codegen;
 mod parser;
 mod value;
@@ -210,6 +212,7 @@ pub type JsonResult<T> = Result<T, JsonError>;
 
 pub use parser::parse;
 use codegen::{ Generator, PrettyGenerator, DumpGenerator, WriterGenerator };
+use dec64::Dec64;
 
 use std::io::Write;
 use std::collections::HashMap;
@@ -257,7 +260,8 @@ impl fmt::Display for JsonValue {
         } else {
             match *self {
                 JsonValue::String(ref value)  => value.fmt(f),
-                JsonValue::Number(ref value)  => value.fmt(f),
+                // FIXME
+                JsonValue::Number(ref value)  => f.write_str("?"), //value.fmt(f),
                 JsonValue::Boolean(ref value) => value.fmt(f),
                 JsonValue::Null               => f.write_str("null"),
                 _                             => f.write_str(&self.dump())
@@ -354,14 +358,14 @@ macro_rules! implement {
     ($to:ident, $from:ty as $wanted:ty) => {
         impl From<$from> for JsonValue {
             fn from(val: $from) -> JsonValue {
-                JsonValue::$to(val as $wanted)
+                JsonValue::$to(val.into())
             }
         }
 
         impl PartialEq<$from> for JsonValue {
             fn eq(&self, other: &$from) -> bool {
                 match *self {
-                    JsonValue::$to(ref value) => value == &(*other as $wanted),
+                    JsonValue::$to(ref value) => *value == (*other).into(),
                     _ => false
                 }
             }
@@ -370,7 +374,7 @@ macro_rules! implement {
         impl<'a> PartialEq<$from> for &'a JsonValue {
             fn eq(&self, other: &$from) -> bool {
                 match **self {
-                    JsonValue::$to(ref value) => value == &(*other as $wanted),
+                    JsonValue::$to(ref value) => *value == (*other).into(),
                     _ => false
                 }
             }
@@ -379,7 +383,7 @@ macro_rules! implement {
         impl PartialEq<JsonValue> for $from {
             fn eq(&self, other: &JsonValue) -> bool {
                 match *other {
-                    JsonValue::$to(ref value) => value == &(*self as $wanted),
+                    JsonValue::$to(ref value) => *value == (*self).into(),
                     _ => false
                 }
             }
@@ -518,7 +522,7 @@ implement!(Number, u16 as f64);
 implement!(Number, u32 as f64);
 implement!(Number, u64 as f64);
 implement!(Number, f32 as f64);
-implement!(Number, f64);
+implement!(Number, f64 as f64);
 implement!(Object, Object);
 implement!(Array, Array);
 implement!(Boolean, bool);

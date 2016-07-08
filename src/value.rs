@@ -3,31 +3,32 @@ use std::ops::{ Index, IndexMut, Deref };
 use iterators::{ Members, MembersMut, Entries, EntriesMut };
 use { JsonResult, JsonError };
 use std::{ mem, usize, u8, u16, u32, u64, isize, i8, i16, i32, i64, f32 };
+use dec64::Dec64;
 
-macro_rules! f64_to_unsinged {
-    ($unsigned:ident, $value:expr) => {
-        if $value < 0.0 || $value > $unsigned::MAX as f64 {
-            None
-        } else {
-            Some($value as $unsigned)
-        }
-    }
-}
+// macro_rules! f64_to_unsinged {
+//     ($unsigned:ident, $value:expr) => {
+//         if $value < 0.0 || $value > $unsigned::MAX as f64 {
+//             None
+//         } else {
+//             Some($value as $unsigned)
+//         }
+//     }
+// }
 
-macro_rules! f64_to_singed {
-    ($signed:ident, $value:expr) => {
-        if $value < $signed::MIN as f64 || $value > $signed::MAX as f64 {
-            None
-        } else {
-            Some($value as $signed)
-        }
-    }
-}
+// macro_rules! f64_to_singed {
+//     ($signed:ident, $value:expr) => {
+//         if $value < $signed::MIN as f64 || $value > $signed::MAX as f64 {
+//             None
+//         } else {
+//             Some($value as $signed)
+//         }
+//     }
+// }
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum JsonValue {
     String(String),
-    Number(f64),
+    Number(Dec64),
     Boolean(bool),
     Null,
     Object(BTreeMap<String, JsonValue>),
@@ -102,7 +103,7 @@ impl JsonValue {
     pub fn is_empty(&self) -> bool {
         match *self {
             JsonValue::String(ref value)  => value.is_empty(),
-            JsonValue::Number(ref value)  => !value.is_normal(),
+            JsonValue::Number(ref value)  => value.is_nan() || value.is_zero(),
             JsonValue::Boolean(ref value) => !value,
             JsonValue::Null               => true,
             JsonValue::Array(ref value)   => value.is_empty(),
@@ -119,53 +120,86 @@ impl JsonValue {
 
     pub fn as_f64(&self) -> Option<f64> {
         match *self {
-            JsonValue::Number(ref value) => Some(*value),
+            JsonValue::Number(ref value) => Some((*value).into()),
             _                            => None
         }
     }
 
     pub fn as_f32(&self) -> Option<f32> {
-        self.as_f64().and_then(|value| f64_to_singed!(f32, value))
+        match *self {
+            JsonValue::Number(ref value) => Some((*value).into()),
+            _                            => None
+        }
     }
 
     pub fn as_u64(&self) -> Option<u64> {
-        self.as_f64().and_then(|value| f64_to_unsinged!(u64, value))
+        match *self {
+            JsonValue::Number(ref value) => Some((*value).into()),
+            _                            => None
+        }
     }
 
     pub fn as_u32(&self) -> Option<u32> {
-        self.as_f64().and_then(|value| f64_to_unsinged!(u32, value))
+        match *self {
+            JsonValue::Number(ref value) => Some((*value).into()),
+            _                            => None
+        }
     }
 
     pub fn as_u16(&self) -> Option<u16> {
-        self.as_f64().and_then(|value| f64_to_unsinged!(u16, value))
+        match *self {
+            JsonValue::Number(ref value) => Some((*value).into()),
+            _                            => None
+        }
     }
 
     pub fn as_u8(&self) -> Option<u8> {
-        self.as_f64().and_then(|value| f64_to_unsinged!(u8, value))
+        match *self {
+            JsonValue::Number(ref value) => Some((*value).into()),
+            _                            => None
+        }
     }
 
     pub fn as_usize(&self) -> Option<usize> {
-        self.as_f64().and_then(|value| f64_to_unsinged!(usize, value))
+        match *self {
+            JsonValue::Number(ref value) => Some((*value).into()),
+            _                            => None
+        }
     }
 
     pub fn as_i64(&self) -> Option<i64> {
-        self.as_f64().and_then(|value| f64_to_singed!(i64, value))
+        match *self {
+            JsonValue::Number(ref value) => Some((*value).into()),
+            _                            => None
+        }
     }
 
     pub fn as_i32(&self) -> Option<i32> {
-        self.as_f64().and_then(|value| f64_to_singed!(i32, value))
+        match *self {
+            JsonValue::Number(ref value) => Some((*value).into()),
+            _                            => None
+        }
     }
 
     pub fn as_i16(&self) -> Option<i16> {
-        self.as_f64().and_then(|value| f64_to_singed!(i16, value))
+        match *self {
+            JsonValue::Number(ref value) => Some((*value).into()),
+            _                            => None
+        }
     }
 
     pub fn as_i8(&self) -> Option<i8> {
-        self.as_f64().and_then(|value| f64_to_singed!(i8, value))
+        match *self {
+            JsonValue::Number(ref value) => Some((*value).into()),
+            _                            => None
+        }
     }
 
     pub fn as_isize(&self) -> Option<isize> {
-        self.as_f64().and_then(|value| f64_to_singed!(isize, value))
+        match *self {
+            JsonValue::Number(ref value) => Some((*value).into()),
+            _                            => None
+        }
     }
 
     pub fn as_bool(&self) -> Option<bool> {

@@ -1,8 +1,9 @@
 use std::io::Write;
 use std::num::FpCategory;
+use dec64::Dec64;
 use JsonValue;
 
-extern crate itoa;
+// extern crate itoa;
 
 const QU: u8 = b'"';
 const BS: u8 = b'\\';
@@ -93,33 +94,38 @@ pub trait Generator {
     }
 
     #[inline(always)]
-    fn write_number(&mut self, num: f64) {
-        match num.classify() {
-            FpCategory::Normal    |
-            FpCategory::Subnormal => {
-                if num.fract() == 0.0 && num.abs() < 1e19 {
-                    itoa::write(self.get_writer(), num as i64).unwrap();
-                } else {
-                    let abs = num.abs();
-                    if abs < 1e-15 || abs > 1e19 {
-                        write!(self.get_writer(), "{:e}", num).unwrap();
-                    } else {
-                        write!(self.get_writer(), "{}", num).unwrap();
-                    }
-                }
-            },
-            FpCategory::Zero => {
-                if num.is_sign_negative() {
-                    self.write(b"-0");
-                } else {
-                    self.write_char(b'0');
-                }
-            },
-            FpCategory::Nan      |
-            FpCategory::Infinite => {
-                self.write(b"null");
-            }
+    fn write_number(&mut self, num: Dec64) {
+        if num.is_nan() {
+            self.write(b"null");
+        } else {
+            num.write(self.get_writer());
         }
+        // match num.classify() {
+        //     FpCategory::Normal    |
+        //     FpCategory::Subnormal => {
+        //         if num.fract() == 0.0 && num.abs() < 1e19 {
+        //             itoa::write(self.get_writer(), num as i64).unwrap();
+        //         } else {
+        //             let abs = num.abs();
+        //             if abs < 1e-15 || abs > 1e19 {
+        //                 write!(self.get_writer(), "{:e}", num).unwrap();
+        //             } else {
+        //                 write!(self.get_writer(), "{}", num).unwrap();
+        //             }
+        //         }
+        //     },
+        //     FpCategory::Zero => {
+        //         if num.is_sign_negative() {
+        //             self.write(b"-0");
+        //         } else {
+        //             self.write_char(b'0');
+        //         }
+        //     },
+        //     FpCategory::Nan      |
+        //     FpCategory::Infinite => {
+        //         self.write(b"null");
+        //     }
+        // }
     }
 
     fn write_json(&mut self, json: &JsonValue) {
