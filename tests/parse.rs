@@ -30,6 +30,11 @@ fn parse_small_number() {
 }
 
 #[test]
+fn large_precision() {
+    assert_eq!(parse("0.004750000000000001").unwrap().as_f64().unwrap(), 0.004750000000000001);
+}
+
+#[test]
 fn parse_very_long_float() {
     let parsed = parse("2.22507385850720113605740979670913197593481954635164564e-308").unwrap();
 
